@@ -2,17 +2,21 @@ import cgi
 import json
 from functools import wraps
 from wsgiref.simple_server import make_server
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib  # py3
 
 
 class Request(object):
-    """\
+    """
     Initiates a request object given the environ from the server
     """
 
     def __init__(self, environ):
         self.headers = self._parse_headers(environ)
         self.get = self._parse_query(environ)
-        self.post = {}
+        self.data = {}
         self.files = {}
         self.json = None
         self.set_headers = {}
@@ -46,7 +50,7 @@ class Request(object):
                     if k.filename:
                         self.files[k.name] = k.file
                     else:
-                        self.post[k.name] = k.value
+                        self.data[k.name] = k.value
 
         elif 'json' in content_type:
             length = self.headers['CONTENT_LENGTH']
@@ -56,15 +60,16 @@ class Request(object):
                 self.json = json.loads(data)
             except ValueError:
                 # todo return error invalid json
+                print('error')
                 pass
 
         else:
             length = self.headers['CONTENT_LENGTH']
-            self.post = environ['wsgi.input'].read(length)
+            self.data = environ['wsgi.input'].read(length)
 
 
 class Response(object):
-    """\
+    """
     Response object is responsable for setting the headers,
      cookie and response code.
     then initiating the make_response and returning the view data
@@ -74,7 +79,7 @@ class Response(object):
     :params data, the raw data rendered from the view
 
     """
-    def __init__(self, request, code='200 ok', data=''):
+    def __init__(self, request, code=200, data=''):
         headers = request.set_headers
         # todo set_cookie
 
@@ -84,21 +89,19 @@ class Response(object):
         self.headers = [(k, v) for k, v in headers.items()]
         self.request = request
         self.data = data
-        self.code = str(code)
+        self.code = code
 
     def render(self):
-        def make_response(code=self.code):
+        resp_code = '{} {}'.format(self.code, httplib.responses[self.code])
+
+        def make_response(code):
             self.request.make_response(code, self.headers)
 
-        if self.code == '404':
-            make_response('404 Not Found')
-            return b'404 Not Found'
+        if str(self.code)[0] in ['4', '5']:
+            make_response(resp_code)
+            return '<h1>{}</h1>'.format(resp_code).encode('utf-8')
 
-        if self.code == '405':
-            make_response('405 Method Not Allowed')
-            return b'405 Method Not Allowed'
-
-        make_response()
+        make_response(resp_code)
         return self.data
 
 
@@ -117,7 +120,7 @@ class App(object):
         self.request.set_headers = value
 
     def route(self, url, methods=['GET']):
-        """\
+        """
         Example usage
 
         @app.route('/home')
@@ -128,12 +131,14 @@ class App(object):
         def decorate(f):
 
             @wraps(f)
-            def wrapper(*args):
-                results = f(*args).encode('utf-8')
+            def wrapper(*args, **kwargs):
+                try:
+                    results = bytes(f(*args, **kwargs))
+                except Exception:
+                    results = str(f(*args, **kwargs)).encode('utf-8')
                 return results
 
-            for method in methods:
-                self.routes[url] = {'methods': methods, 'render': wrapper}
+            self.routes[url] = {'methods': methods, 'render': wrapper}
 
             return wrapper
         return decorate
@@ -142,7 +147,7 @@ class App(object):
         path = self.request.headers['PATH_INFO']
         self.method = self.request.headers['REQUEST_METHOD']
         view = self.routes.get(path)
-
+        print('1')
         if not view:
             response = Response(self.request, 404)
         elif self.method not in view['methods']:
