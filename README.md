@@ -8,10 +8,10 @@ Example usage
 @app.route('/form', methods=['POST'])
 def form():
 	# do something with form files
-    # app.request.files
+    app.request.files
 
     # do something with form fields data
-    # app.request.data
+    app.request.data
 
     return 'submitted successfully'
 
