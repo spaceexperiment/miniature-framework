@@ -147,7 +147,6 @@ class App(object):
         path = self.request.headers['PATH_INFO']
         self.method = self.request.headers['REQUEST_METHOD']
         view = self.routes.get(path)
-        print('1')
         if not view:
             response = Response(self.request, 404)
         elif self.method not in view['methods']:
@@ -164,7 +163,6 @@ class App(object):
 
     def __call__(self, environ, make_response):
         """The actual wsgi app"""
-
         self.dispatch_request(environ)
         self.request.make_response = make_response
         yield self.response.render()

@@ -16,7 +16,7 @@ def post():
 
 @app.route('/form', methods=['POST'])
 def form():
-    print(len(app.request.files))
+    print(app.request.files)
     return app.request.data
 
 @app.route('/data', methods=['POST'])
