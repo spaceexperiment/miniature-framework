@@ -21,7 +21,7 @@ def home(r):
     return 'Welcome home', {'custom_headers': 'header_be_here'}
     
 
-@app.route('/form', methods=['GET', 'POST'])
+@app.route('/form', methods=['POST'])
 def form(r):
     # do something with form data and files dictionary
     print(r.data)
