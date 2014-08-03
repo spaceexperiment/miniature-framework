@@ -5,16 +5,30 @@ In 174 lines of code, with no external dependencies
 
 Example usage
 ``` python
-@app.route('/form', methods=['POST'])
-def form():
-	# do something with form files
-    app.request.files
+from wsgi import App
 
-    # do something with form fields data
-    app.request.data
+
+app = App()
+
+@app.route('/')
+def home(r):
+    # do something with headers
+    print(r.headers)
+
+    # do something with query
+    print(r.query)
+
+    return 'Welcome home', {'custom_headers': 'header_be_here'}
+    
+
+@app.route('/form', methods=['GET', 'POST'])
+def form(r):
+    # do something with form data and files dictionary
+    print(r.data)
 
     return 'submitted successfully'
 
-```
+if __name__ == '__main__':
+    app.run()
 
-See example_app.py for more examples
+```
