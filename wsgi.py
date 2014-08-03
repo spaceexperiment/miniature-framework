@@ -1,5 +1,4 @@
 import cgi
-import json
 from functools import wraps
 from wsgiref.simple_server import make_server
 try:
