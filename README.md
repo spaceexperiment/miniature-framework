@@ -1,7 +1,7 @@
 wsgi application with route decorator
 =====================================
 
-In 174 lines of code, with no external dependencies
+In 144 lines of code, with no external dependencies
 
 Example usage
 ``` python
